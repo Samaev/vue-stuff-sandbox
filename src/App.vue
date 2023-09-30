@@ -21,23 +21,35 @@
                   class="block w-full pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
                   placeholder="For example DOGE"
                   v-model="ticker"
+                  @input="hasTicket = false"
               />
             </div>
             <div class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
-            <span class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
+            <span
+                @click="ticker = 'BTC'"
+                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
               BTC
             </span>
-              <span class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
+              <span
+                  @click="ticker = 'DOGE'"
+                  class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
               DOGE
             </span>
-              <span class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
+              <span
+                  @click="ticker = 'BCH'"
+                  class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
               BCH
             </span>
-              <span class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-              CHD
+              <span
+                  @click="ticker = 'ETH'"
+                  class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
+              ETH
             </span>
             </div>
-            <div class="text-sm text-red-600">This ticker has been already added</div>
+            <div
+                v-if="hasTicket"
+                class="text-sm text-red-600">This ticker has been already added
+            </div>
           </div>
         </div>
         <button
@@ -109,16 +121,10 @@
         </h3>
         <div class="flex items-end border-gray-600 border-b border-l h-64">
           <div
-              class="bg-purple-800 border w-10 h-24"
-          ></div>
-          <div
-              class="bg-purple-800 border w-10 h-32"
-          ></div>
-          <div
-              class="bg-purple-800 border w-10 h-48"
-          ></div>
-          <div
-              class="bg-purple-800 border w-10 h-16"
+              v-for="(bar,index) in normalizeGraph()"
+              :key="index"
+              class="bg-purple-800 border w-10"
+              :style="{ height: `${bar}%`}"
           ></div>
         </div>
         <button
@@ -162,7 +168,9 @@ export default {
     return {
       ticker: null,
       tickers: [],
-      selectedElement: null
+      selectedElement: null,
+      graph: [],
+      hasTicket: false
     }
   },
   methods: {
@@ -171,28 +179,37 @@ export default {
         name: this.ticker,
         price: "-"
       }
+      if (this.validateExistingTicket(newTicker.name)) {
+        this.hasTicket = true;
+        return;
+      }
       this.tickers.push(newTicker);
       setInterval(async () => {
         const tickFromServer = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${newTicker.name}&tsyms=USD&api_key=12da991d9ac7237f2cd8f3461def53ebe3019f79ca5020fb9a768bded50250e6`)
         const data = await tickFromServer.json();
-        this.tickers.find(ticker => ticker.name === newTicker.name).price = data.USD;
+        this.tickers.find(ticker => ticker.name === newTicker.name).price = data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
+        if (this.selectedElement?.name === newTicker.name) {
+          this.graph.push(data.USD)
+        }
       }, 3000)
       this.ticker = null;
     },
     handleDelete(tick) {
       this.tickers = this.tickers.filter(ticker => tick.name !== ticker.name)
+    },
+    validateExistingTicket(name) {
+      return this.tickers.find(ticker => ticker.name === name)
+    },
+    normalizeGraph() {
+      const maxValue = Math.max(...this.graph);
+      const minValue = Math.min(...this.graph);
+      return this.graph.map((price) => 5 + ((price - minValue) * 95 / (maxValue - minValue))
+      )
+
     }
   }
 }
 </script>
 
 <style src="./app.css">
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
 </style>
