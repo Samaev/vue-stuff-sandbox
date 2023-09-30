@@ -80,7 +80,7 @@
         <div
             v-for="tick in tickers"
             :key="tick"
-            @click="selectedElement = tick"
+            @click="selectTicker(tick)"
             :class="selectedElement === tick ? 'border-4' : ''"
             class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer"
         >
@@ -206,6 +206,10 @@ export default {
       return this.graph.map((price) => 5 + ((price - minValue) * 95 / (maxValue - minValue))
       )
 
+    },
+    selectTicker(tick) {
+      this.selectedElement = tick;
+      this.graph = []
     }
   }
 }
