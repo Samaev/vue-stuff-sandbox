@@ -114,7 +114,7 @@
         </h3>
         <div class="flex items-end border-gray-600 border-b border-l h-64">
           <div
-              v-for="(bar,index) in normalizeGraph()"
+              v-for="(bar,index) in normalizeGraph"
               :key="index"
               class="bg-purple-800 border w-10"
               :style="{ height: `${bar}%`}"
