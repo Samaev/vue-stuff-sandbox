@@ -215,13 +215,7 @@ export default {
     validateExistingTicket(name) {
       return this.tickers.find(ticker => ticker.name === name)
     },
-    normalizeGraph() {
-      const maxValue = Math.max(...this.graph);
-      const minValue = Math.min(...this.graph);
-      return this.graph.map((price) => 5 + ((price - minValue) * 95 / (maxValue - minValue))
-      )
 
-    },
     selectTicker(tick) {
       this.selectedElement = tick;
       this.graph = []
@@ -251,7 +245,13 @@ export default {
       }
       const filteredCoinsAll = this.coins.filter(coin => coin.Symbol.toLowerCase().includes(this.ticker) || coin.FullName.toLowerCase().includes(this.ticker));
       return filteredCoinsAll.slice(0, 4);
-    }
+    },
+    normalizeGraph() {
+      const maxValue = Math.max(...this.graph);
+      const minValue = Math.min(...this.graph);
+      return this.graph.map((price) => 5 + ((price - minValue) * 95 / (maxValue - minValue))
+      )
+    },
   }
 }
 </script>
