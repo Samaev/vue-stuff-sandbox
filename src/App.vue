@@ -250,7 +250,7 @@ export default {
         return [];
       }
       const filteredCoinsAll = this.coins.filter(coin => coin.Symbol.toLowerCase().includes(this.ticker) || coin.FullName.toLowerCase().includes(this.ticker));
-      return filteredCoinsAll.slice(0, 3);
+      return filteredCoinsAll.slice(0, 4);
     }
   }
 }
