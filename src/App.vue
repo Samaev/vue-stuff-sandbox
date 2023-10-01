@@ -18,37 +18,30 @@
                   type="text"
                   name="wallet"
                   id="wallet"
+                  v-on:keydown.enter="add()"
                   class="block w-full pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
                   placeholder="For example DOGE"
                   v-model="ticker"
-                  @input="hasTicket = false"
+                  @input="hasTicket = false;errorNaming = false;"
               />
             </div>
             <div class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
-            <span
-                @click="ticker = 'BTC'"
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-              BTC
-            </span>
               <span
-                  @click="ticker = 'DOGE'"
+                  v-for="coin in filteredCoins"
+                  :key="coin.id"
+                  @click="ticker = coin.Symbol"
                   class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-              DOGE
+              {{ coin.Symbol }}
             </span>
-              <span
-                  @click="ticker = 'BCH'"
-                  class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-              BCH
-            </span>
-              <span
-                  @click="ticker = 'ETH'"
-                  class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-              ETH
-            </span>
+
             </div>
             <div
                 v-if="hasTicket"
                 class="text-sm text-red-600">This ticker has been already added
+            </div>
+            <div
+                v-if="errorNaming"
+                class="text-sm text-red-600">Entered ticker doesn't exist
             </div>
           </div>
         </div>
@@ -86,7 +79,7 @@
         >
           <div class="px-4 py-5 sm:p-6 text-center">
             <dt class="text-sm font-medium text-gray-500 truncate">
-              {{ tick.name }} - USD
+              {{ tick.name.toUpperCase() }} - USD
             </dt>
             <dd class="mt-1 text-3xl font-semibold text-gray-900">
               {{ tick.price }}
@@ -166,14 +159,35 @@ export default {
   components: {},
   data() {
     return {
-      ticker: null,
+      ticker: '',
       tickers: [],
       selectedElement: null,
       graph: [],
-      hasTicket: false
+      hasTicket: false,
+      coins: [],
+      errorNaming: false
     }
   },
+  created() {
+    const tickersData = localStorage.getItem('crypto-stuff');
+    if (tickersData) {
+      this.tickers = JSON.parse(tickersData);
+    }
+    this.tickers.forEach(ticker => {
+      this.subscribeToTickersUpdate(ticker.name)
+    })
+  },
   methods: {
+    subscribeToTickersUpdate(tickerName) {
+      setInterval(async () => {
+        const tickFromServer = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${tickerName}&tsyms=USD&api_key=12da991d9ac7237f2cd8f3461def53ebe3019f79ca5020fb9a768bded50250e6`)
+        const data = await tickFromServer.json();
+        this.tickers.find(ticker => ticker.name === tickerName).price = data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
+        if (this.selectedElement?.name === tickerName) {
+          this.graph.push(data.USD)
+        }
+      }, 3000);
+    },
     add() {
       const newTicker = {
         name: this.ticker,
@@ -183,15 +197,16 @@ export default {
         this.hasTicket = true;
         return;
       }
-      this.tickers.push(newTicker);
-      setInterval(async () => {
-        const tickFromServer = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${newTicker.name}&tsyms=USD&api_key=12da991d9ac7237f2cd8f3461def53ebe3019f79ca5020fb9a768bded50250e6`)
-        const data = await tickFromServer.json();
-        this.tickers.find(ticker => ticker.name === newTicker.name).price = data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
-        if (this.selectedElement?.name === newTicker.name) {
-          this.graph.push(data.USD)
-        }
-      }, 3000)
+      this.subscribeToTickersUpdate(newTicker.name)
+      if (this.coins.find(coin => newTicker.name.toLowerCase() === coin.Symbol.toLowerCase())) {
+        this.tickers.push(newTicker);
+      } else {
+        this.errorNaming = true;
+        return;
+      }
+
+
+      localStorage.setItem('crypto-stuff', JSON.stringify(this.tickers));
       this.ticker = null;
     },
     handleDelete(tick) {
@@ -210,6 +225,32 @@ export default {
     selectTicker(tick) {
       this.selectedElement = tick;
       this.graph = []
+    },
+    async getAllCoins() {
+      const allCoins = await fetch('https://min-api.cryptocompare.com/data/all/coinlist?summary=true');
+      const allCoinsFromServer = await allCoins.json();
+      const dataArray = [];
+
+      for (const key in allCoinsFromServer.Data) {
+        if (Object.prototype.hasOwnProperty.call(allCoinsFromServer.Data, key)) {
+          const item = {Id: key, ...allCoinsFromServer.Data[key]};
+          dataArray.push(item);
+        }
+      }
+      this.coins = dataArray;
+    }
+  },
+  mounted() {
+    this.getAllCoins();
+
+  },
+  computed: {
+    filteredCoins() {
+      if (!this.ticker) {
+        return [];
+      }
+      const filteredCoinsAll = this.coins.filter(coin => coin.Symbol.toLowerCase().includes(this.ticker) || coin.FullName.toLowerCase().includes(this.ticker));
+      return filteredCoinsAll.slice(0, 3);
     }
   }
 }
