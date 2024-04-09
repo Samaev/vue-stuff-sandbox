@@ -1,4 +1,5 @@
 <template>
+
   <div class="container mx-auto flex flex-col items-center bg-gray-100 p-4">
 <!--    <div class="fixed w-100 h-100 opacity-80 bg-purple-800 inset-0 z-50 flex items-center justify-center">-->
 <!--      <svg class="animate-spin -ml-1 mr-3 h-12 w-12 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">-->
@@ -7,6 +8,12 @@
 <!--      </svg>-->
 <!--    </div>-->
     <div class="container">
+      <div>
+        <router-link to="/one">Test one </router-link>
+        <router-link to="/two">Test two </router-link>
+        <TestThree/>
+        <h1><RouterView/></h1>
+      </div>
       <section>
         <div class="flex">
           <div class="max-w-xs">
@@ -154,9 +161,11 @@
 
 <script>
 
+import TestThree from "@/TestThreeView.vue";
+
 export default {
   name: 'App',
-  components: {},
+  components: {TestThree},
   data() {
     return {
       ticker: '',
@@ -182,7 +191,7 @@ export default {
       setInterval(async () => {
         const tickFromServer = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${tickerName}&tsyms=USD&api_key=12da991d9ac7237f2cd8f3461def53ebe3019f79ca5020fb9a768bded50250e6`)
         const data = await tickFromServer.json();
-        this.tickers.find(ticker => ticker.name === tickerName).price = data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
+        this.tickers.find(ticker => ticker.name === tickerName).price = 1;
         if (this.selectedElement?.name === tickerName) {
           this.graph.push(data.USD)
         }
