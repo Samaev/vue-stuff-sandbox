@@ -11,6 +11,7 @@
       <div>
         <router-link to="/one">Test one </router-link>
         <router-link to="/two">Test two </router-link>
+        <router-link to="/four">Test four </router-link>
         <TestThree/>
         <h1><RouterView/></h1>
       </div>
